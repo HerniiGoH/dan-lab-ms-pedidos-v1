@@ -1,8 +1,15 @@
 package utn.frsf.isi.dan.grupotp.tplab.danmspedidos.model;
 
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
 import java.util.Objects;
 
+@Entity
 public class Producto {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     private String descripcion;
     private Double precio;

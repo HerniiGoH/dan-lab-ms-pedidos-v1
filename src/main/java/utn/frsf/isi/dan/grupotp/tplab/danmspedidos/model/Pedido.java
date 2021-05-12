@@ -1,14 +1,27 @@
 package utn.frsf.isi.dan.grupotp.tplab.danmspedidos.model;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIdentityReference;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+
+import javax.persistence.*;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 
+@Entity
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Pedido {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     private Instant fechaPedido;
+    @OneToOne
     private EstadoPedido estadoPedido;
+    @JsonIdentityReference
+    @OneToMany(mappedBy = "pedido")
     private List<DetallePedido> detallePedido;
+    @OneToOne
     private Obra obra;
 
     public Pedido() {
