@@ -16,4 +16,5 @@ public interface PedidoService {
     DetallePedido crearDetallePedido(DetallePedido nuevoDetallePedido, Integer id);
     Optional<Pedido> actualizarPedido(Pedido nuevoPedido, Integer id);
     Boolean borrarPedido(Integer id);
+    Boolean borrarDetallePedido(Integer idPedido, Integer id);
 }

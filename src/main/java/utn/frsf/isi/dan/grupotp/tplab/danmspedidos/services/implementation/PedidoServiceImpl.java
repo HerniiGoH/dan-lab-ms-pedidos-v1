@@ -2,10 +2,7 @@ package utn.frsf.isi.dan.grupotp.tplab.danmspedidos.services.implementation;
 
 import net.minidev.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -16,9 +13,7 @@ import utn.frsf.isi.dan.grupotp.tplab.danmspedidos.repository.DetallePedidoRepos
 import utn.frsf.isi.dan.grupotp.tplab.danmspedidos.repository.PedidoRepository;
 import utn.frsf.isi.dan.grupotp.tplab.danmspedidos.services.PedidoService;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class PedidoServiceImpl implements PedidoService {
@@ -71,6 +66,16 @@ public class PedidoServiceImpl implements PedidoService {
                 .toEntityList(Obra.class)
                 .block();
 
+        if(response!=null && response.getStatusCode().equals(HttpStatus.OK)){
+           List<Obra> obras = response.getBody();
+            HashSet<Pedido> pedidos = new HashSet<>();
+            assert obras != null;
+            for(Obra aux : obras){
+                pedidos.addAll(this.buscarPedidosPorIdObra(aux.getId()).orElseGet(ArrayList::new));
+            }
+            return Optional.of(new ArrayList<>(pedidos));
+        }
+
         return Optional.empty();
     }
 
@@ -106,6 +111,15 @@ public class PedidoServiceImpl implements PedidoService {
     public Boolean borrarPedido(Integer id) {
         if(pedidoRepository.existsById(id)){
             pedidoRepository.deleteById(id);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public Boolean borrarDetallePedido(Integer idPedido, Integer id) {
+        if(detallePedidoRepository.existsById(id)){
+            detallePedidoRepository.deleteById(id);
             return true;
         }
         return false;
