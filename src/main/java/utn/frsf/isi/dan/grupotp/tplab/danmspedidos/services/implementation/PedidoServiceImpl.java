@@ -17,6 +17,7 @@ import utn.frsf.isi.dan.grupotp.tplab.danmspedidos.repository.PedidoRepository;
 import utn.frsf.isi.dan.grupotp.tplab.danmspedidos.services.PedidoService;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -50,9 +51,17 @@ public class PedidoServiceImpl implements PedidoService {
         //TODO hacer bien esto
         JSONObject json = new JSONObject();
         JSONObject cliente = new JSONObject();
-        cliente.put("id", id);
-        cliente.put("cuit", cuit);
-        json.put("cliente", cliente);
+
+        if(cuit!=null){
+            cliente.put("id", Objects.requireNonNullElse(id, -1));
+            cliente.put("cuit", cuit);
+            json.put("cliente", cliente);
+        } else {
+            if(id!=null){
+                cliente.put("id",id);
+                json.put("cliente", cliente);
+            }
+        }
         WebClient webClient = WebClient.create("http://localhost:4040/api/obra");
         ResponseEntity<List<Obra>> response = webClient.method(HttpMethod.GET)
                 .uri("/obra")
