@@ -108,7 +108,9 @@ public class PedidoServiceImpl implements PedidoService {
     @Override
     public Optional<Pedido> actualizarPedido(Pedido nuevoPedido, Integer id) {
         if(pedidoRepository.existsById(id)){
-            return Optional.of(pedidoRepository.save(nuevoPedido));
+            Pedido pedidoGuardado = pedidoRepository.save(nuevoPedido);
+            pedidoGuardado.setObra(buscarObraPorId(pedidoGuardado.getObraId()));
+            return Optional.of(pedidoGuardado);
         }
         return Optional.empty();
     }

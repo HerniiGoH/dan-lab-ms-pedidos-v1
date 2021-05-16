@@ -48,7 +48,10 @@ public class PedidoRest {
 
     @PostMapping
     public ResponseEntity<Pedido> crearPedido(@RequestBody Pedido nuevoPedido){
-        return ResponseEntity.of(Optional.of(pedidoService.crearPedido(nuevoPedido)));
+        if(nuevoPedido.getObra()!=null && nuevoPedido.getObraId()!=null && nuevoPedido.getDetallePedido()!=null && !nuevoPedido.getDetallePedido().isEmpty() && nuevoPedido.getDetallePedido().stream().allMatch(detallePedido -> detallePedido.getProductoId()!=null && detallePedido.getProducto()!=null && detallePedido.getCantidad()!=null)){
+            return ResponseEntity.of(Optional.of(pedidoService.crearPedido(nuevoPedido)));
+        }
+        return ResponseEntity.badRequest().build();
     }
 
     @PostMapping("/{id}/detalle")
