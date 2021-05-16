@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Entity
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+@JsonIdentityInfo(scope = Pedido.class, generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Pedido {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
