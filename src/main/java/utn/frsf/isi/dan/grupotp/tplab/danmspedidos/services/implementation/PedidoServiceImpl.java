@@ -28,12 +28,16 @@ public class PedidoServiceImpl implements PedidoService {
 
     @Override
     public List<Pedido> buscarTodos() {
-        return pedidoRepository.findAll();
+        List<Pedido> pedidosEncontrados = pedidoRepository.findAll();
+        pedidosEncontrados.forEach(pedido -> pedido.setObra(buscarObraPorId(pedido.getObraId())));
+        return pedidosEncontrados;
     }
 
     @Override
     public Optional<Pedido> buscarPedidoPorId(Integer id) {
-        return pedidoRepository.findById(id);
+        Optional<Pedido> pedidoEncontrado = pedidoRepository.findById(id);
+        pedidoEncontrado.ifPresent(pedido -> pedido.setObra(buscarObraPorId(pedido.getObraId())));
+        return pedidoEncontrado;
     }
 
     @Override
@@ -60,6 +64,7 @@ public class PedidoServiceImpl implements PedidoService {
         WebClient webClient = WebClient.create("http://localhost:4040/api/obra");
         ResponseEntity<List<Obra>> response = webClient.method(HttpMethod.GET)
                 .uri("/obra")
+                .accept(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(BodyInserters.fromValue(json))
                 .retrieve()
@@ -73,6 +78,7 @@ public class PedidoServiceImpl implements PedidoService {
             for(Obra aux : obras){
                 pedidos.addAll(this.buscarPedidosPorIdObra(aux.getId()).orElseGet(ArrayList::new));
             }
+            pedidos.forEach(pedido -> pedido.setObra(buscarObraPorId(pedido.getObraId())));
             return Optional.of(new ArrayList<>(pedidos));
         }
 
@@ -123,5 +129,18 @@ public class PedidoServiceImpl implements PedidoService {
             return true;
         }
         return false;
+    }
+
+    private Obra buscarObraPorId(Integer id){
+        WebClient webClient = WebClient.create("http://localhost:4040/api/obra/"+id);
+        ResponseEntity<Obra> response = webClient.method(HttpMethod.GET)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .toEntity(Obra.class)
+                .block();
+        if(response!=null && response.getStatusCode().equals(HttpStatus.OK)){
+            return response.getBody();
+        }
+        return null;
     }
 }

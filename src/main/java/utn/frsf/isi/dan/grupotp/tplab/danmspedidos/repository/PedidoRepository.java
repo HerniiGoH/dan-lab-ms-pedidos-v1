@@ -10,6 +10,6 @@ import java.util.Optional;
 public interface PedidoRepository extends JpaRepository<Pedido, Integer> {
     List<Pedido> findAll();
     Optional<Pedido> findById(Integer integer);
-    @Query(value = "SELECT p FROM Pedido p WHERE (:idObra = p.obra.id)")
+    @Query(value = "SELECT p FROM Pedido p WHERE (:idObra = p.obraId)")
     Optional<List<Pedido>> findByIdObra(Integer idObra);
 }

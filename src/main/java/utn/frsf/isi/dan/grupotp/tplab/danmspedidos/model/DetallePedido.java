@@ -15,8 +15,9 @@ public class DetallePedido {
     private Integer id;
     private Integer cantidad;
     private Double precio;
-    @OneToOne
+    @Transient
     private Producto producto;
+    private Integer productoId;
     @JsonIdentityReference(alwaysAsId = true)
     @ManyToOne
     private Pedido pedido;
@@ -24,11 +25,12 @@ public class DetallePedido {
     public DetallePedido() {
     }
 
-    public DetallePedido(Integer id, Integer cantidad, Double precio, Producto producto, Pedido pedido) {
+    public DetallePedido(Integer id, Integer cantidad, Double precio, Producto producto, Integer productoId, Pedido pedido) {
         this.id = id;
         this.cantidad = cantidad;
         this.precio = precio;
         this.producto = producto;
+        this.productoId = productoId;
         this.pedido = pedido;
     }
 
@@ -64,6 +66,14 @@ public class DetallePedido {
         this.producto = producto;
     }
 
+    public Integer getProductoId() {
+        return productoId;
+    }
+
+    public void setProductoId(Integer productoId) {
+        this.productoId = productoId;
+    }
+
     public Pedido getPedido() {
         return pedido;
     }
@@ -77,11 +87,11 @@ public class DetallePedido {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DetallePedido that = (DetallePedido) o;
-        return getId().equals(that.getId()) && getCantidad().equals(that.getCantidad()) && getPrecio().equals(that.getPrecio()) && getProducto().equals(that.getProducto()) && getPedido().equals(that.getPedido());
+        return getId().equals(that.getId()) && getCantidad().equals(that.getCantidad()) && getPrecio().equals(that.getPrecio()) && Objects.equals(getProducto(), that.getProducto()) && getProductoId().equals(that.getProductoId()) && getPedido().equals(that.getPedido());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getCantidad(), getPrecio(), getProducto(), getPedido());
+        return Objects.hash(getId(), getCantidad(), getPrecio(), getProducto(), getProductoId(), getPedido());
     }
 }
