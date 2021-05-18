@@ -159,7 +159,6 @@ public class PedidoServiceImpl implements PedidoService {
                 pedido.setObra(buscarObraPorId(pedido.getObraId()));
                 return Optional.of(pedido);
             } else {
-                System.out.println("Entro al switch");
                 switch (estadoPedido.getId()){
                     case 1:{
                         return Optional.empty();
