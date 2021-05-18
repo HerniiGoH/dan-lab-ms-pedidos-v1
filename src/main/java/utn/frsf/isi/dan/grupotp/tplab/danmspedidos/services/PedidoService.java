@@ -11,10 +11,13 @@ public interface PedidoService {
     Optional<Pedido> buscarPedidoPorId(Integer id);
     Optional<List<Pedido>> buscarPedidosPorIdObra(Integer id);
     Optional<List<Pedido>> buscarPedidosPorCliente(Integer id, String cuit);
+    Optional<List<Pedido>> buscarPedidosPorEstado(String estado);
     Optional<DetallePedido> buscarDetallePedidoPorId(Integer idPedido, Integer id);
     Pedido crearPedido(Pedido nuevoPedido);
     DetallePedido crearDetallePedido(DetallePedido nuevoDetallePedido, Integer id);
     Optional<Pedido> actualizarPedido(Pedido nuevoPedido, Integer id);
+    Optional<DetallePedido> actualizarDetallePedido(DetallePedido nuevoDetalle, Integer idPedido, Integer id);
+    Optional<Pedido> actualizarEstadoPedido(Integer id, String estado);
     Boolean borrarPedido(Integer id);
     Boolean borrarDetallePedido(Integer idPedido, Integer id);
 }

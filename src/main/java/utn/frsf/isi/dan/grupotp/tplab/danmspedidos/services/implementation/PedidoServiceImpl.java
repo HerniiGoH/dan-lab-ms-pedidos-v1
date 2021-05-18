@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import utn.frsf.isi.dan.grupotp.tplab.danmspedidos.model.DetallePedido;
+import utn.frsf.isi.dan.grupotp.tplab.danmspedidos.model.EstadoPedido;
 import utn.frsf.isi.dan.grupotp.tplab.danmspedidos.model.Obra;
 import utn.frsf.isi.dan.grupotp.tplab.danmspedidos.model.Pedido;
 import utn.frsf.isi.dan.grupotp.tplab.danmspedidos.repository.DetallePedidoRepository;
@@ -42,12 +43,13 @@ public class PedidoServiceImpl implements PedidoService {
 
     @Override
     public Optional<List<Pedido>> buscarPedidosPorIdObra(Integer id) {
-        return pedidoRepository.findByIdObra(id);
+        Optional<List<Pedido>> pedidosEncontrados = pedidoRepository.findByIdObra(id);
+        pedidosEncontrados.ifPresent(pedidos -> pedidos.forEach(pedido -> pedido.setObra(buscarObraPorId(pedido.getObraId()))));
+        return pedidosEncontrados;
     }
 
     @Override
     public Optional<List<Pedido>> buscarPedidosPorCliente(Integer id, String cuit) {
-        //TODO hacer bien esto
         JSONObject json = new JSONObject();
         JSONObject cliente = new JSONObject();
 
@@ -86,6 +88,16 @@ public class PedidoServiceImpl implements PedidoService {
     }
 
     @Override
+    public Optional<List<Pedido>> buscarPedidosPorEstado(String estado){
+        if(pedidoRepository.buscarEstadoPedido(estado).isPresent()){
+            Optional<List<Pedido>> pedidosEncontrados = pedidoRepository.buscarPedidoPorEstado(estado);
+            pedidosEncontrados.ifPresent(pedidos -> pedidos.forEach(pedido -> pedido.setObra(buscarObraPorId(pedido.getObraId()))));
+            return pedidosEncontrados;
+        }
+        return Optional.empty();
+    }
+
+    @Override
     public Optional<DetallePedido> buscarDetallePedidoPorId(Integer idPedido, Integer id) {
         return detallePedidoRepository.findById(id);
     }
@@ -102,15 +114,95 @@ public class PedidoServiceImpl implements PedidoService {
 
     @Override
     public DetallePedido crearDetallePedido(DetallePedido nuevoDetallePedido, Integer id) {
-        return detallePedidoRepository.save(nuevoDetallePedido);
+        Optional<Pedido> pedidoOpt = pedidoRepository.findById(id);
+        if(pedidoOpt.isPresent() && pedidoOpt.get().getEstadoPedido().getId()==1){
+            nuevoDetallePedido.setPedido(pedidoOpt.get());
+            return detallePedidoRepository.save(nuevoDetallePedido);
+        } else return null;
     }
 
     @Override
     public Optional<Pedido> actualizarPedido(Pedido nuevoPedido, Integer id) {
-        if(pedidoRepository.existsById(id)){
-            Pedido pedidoGuardado = pedidoRepository.save(nuevoPedido);
-            pedidoGuardado.setObra(buscarObraPorId(pedidoGuardado.getObraId()));
-            return Optional.of(pedidoGuardado);
+        Optional<Pedido>pedidoViejo = pedidoRepository.findById(id);
+        if(pedidoViejo.isPresent()){
+            if(pedidoViejo.get().getEstadoPedido().getEstado().equals(nuevoPedido.getEstadoPedido().getEstado())){
+                Pedido pedidoGuardado = pedidoRepository.save(nuevoPedido);
+                pedidoGuardado.setObra(buscarObraPorId(pedidoGuardado.getObraId()));
+                return Optional.of(pedidoGuardado);
+            } else return Optional.empty();
+        } else return Optional.empty();
+    }
+
+    @Override
+    public Optional<DetallePedido> actualizarDetallePedido(DetallePedido nuevoDetalle, Integer idPedido, Integer id){
+        Optional<Pedido> pedidoOpt = pedidoRepository.findById(id);
+
+        if(pedidoOpt.isPresent() && pedidoOpt.get().getEstadoPedido().getId()==1 && detallePedidoRepository.existsById(id)){
+            nuevoDetalle.setId(id);
+            nuevoDetalle.setPedido(pedidoOpt.get());
+            return Optional.of(detallePedidoRepository.save(nuevoDetalle));
+        }
+
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<Pedido> actualizarEstadoPedido(Integer id, String estado){
+        Optional<EstadoPedido> estadoPedidoOpt = pedidoRepository.buscarEstadoPedido(estado);
+        Optional<Pedido> pedidoOpt = pedidoRepository.findById(id);
+        if(pedidoOpt.isPresent() && estadoPedidoOpt.isPresent()){
+            //TODO hacer bien lo de los estados, por ahora siempre pasa de CONFIRMADO a ACEPTADO
+            Pedido pedido = pedidoOpt.get();
+            EstadoPedido estadoPedido = estadoPedidoOpt.get();
+            //Si actualizo al estado que ya tengo, me voy nomas no hago nada
+            if(pedido.getEstadoPedido().getId().equals(estadoPedido.getId())){
+                pedido.setObra(buscarObraPorId(pedido.getObraId()));
+                return Optional.of(pedido);
+            } else {
+                System.out.println("Entro al switch");
+                switch (estadoPedido.getId()){
+                    case 1:{
+                        return Optional.empty();
+                    }
+                    case 2:{
+                        //TODO hacer bien la verificacion
+                        pedido.setEstadoPedido(pedidoRepository.buscarEstadoPedido("ACEPTADO").orElse(null));
+                        pedido = pedidoRepository.save(pedido);
+                        pedido.setObra(buscarObraPorId(pedido.getObraId()));
+                        return Optional.of(pedido);
+                    }
+                    case 3:{
+                        //TODO no se bien que hacer asique retorno vacio
+                        return Optional.empty();
+                    }
+                    case 4:{
+                        if(pedido.getEstadoPedido().getId()<=3){
+                            pedido.setEstadoPedido(estadoPedido);
+                            pedido = pedidoRepository.save(pedido);
+                            pedido.setObra(buscarObraPorId(pedido.getObraId()));
+                            return Optional.of(pedido);
+                        }
+                        return Optional.empty();
+                    }
+                    case 5:{
+                        //TODO no se bien que hacer asique retorno vacio
+                        return Optional.empty();
+                    }
+                    case 6:{
+                        //TODO no se bien que hacer asique retorno vacio
+                        return Optional.empty();
+                    }
+                    case 7:{
+                        //TODO no se bien que hacer asique retorno vacio
+                        return Optional.empty();
+                    }
+                    case 8:{
+                        //TODO no se bien que hacer asique retorno vacio
+                        return Optional.empty();
+                    }
+                }
+            }
+            return Optional.empty();
         }
         return Optional.empty();
     }
@@ -126,7 +218,8 @@ public class PedidoServiceImpl implements PedidoService {
 
     @Override
     public Boolean borrarDetallePedido(Integer idPedido, Integer id) {
-        if(detallePedidoRepository.existsById(id)){
+        Optional<Pedido> pedidoOpt = pedidoRepository.findById(idPedido);
+        if(pedidoOpt.isPresent() && pedidoOpt.get().getEstadoPedido().getId()==1 && detallePedidoRepository.existsById(id)){
             detallePedidoRepository.deleteById(id);
             return true;
         }

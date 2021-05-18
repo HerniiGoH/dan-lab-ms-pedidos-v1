@@ -41,6 +41,11 @@ public class PedidoRest {
         return ResponseEntity.of(pedidoService.buscarPedidosPorCliente(id, cuit));
     }
 
+    @GetMapping("/estado")
+    public ResponseEntity<List<Pedido>> buscarPedidosPorEstado(@RequestParam(name = "estado") String estado){
+        return ResponseEntity.of(pedidoService.buscarPedidosPorEstado(estado));
+    }
+
     @GetMapping("/{idPedido}/detalle/{id}")
     public ResponseEntity<DetallePedido> buscarDetallePedidoPorId(@PathVariable Integer idPedido, @PathVariable Integer id){
         return ResponseEntity.of(pedidoService.buscarDetallePedidoPorId(idPedido, id));
@@ -62,6 +67,16 @@ public class PedidoRest {
     @PutMapping("/{id}")
     public ResponseEntity<Pedido> actualizarPedido(@RequestBody Pedido nuevoPedido, @PathVariable Integer id){
         return ResponseEntity.of(pedidoService.actualizarPedido(nuevoPedido, id));
+    }
+
+    @PutMapping("/{idPedido}/detallePedido/{id}")
+    public ResponseEntity<DetallePedido> actualizarDetallePedido(@RequestBody DetallePedido nuevoDetalle, @PathVariable Integer idPedido, @PathVariable Integer id){
+        return ResponseEntity.of(pedidoService.actualizarDetallePedido(nuevoDetalle, idPedido, id));
+    }
+
+    @PatchMapping("/{id}/actualizar-estado")
+    public ResponseEntity<Pedido> actualizarEstadoPedido(@PathVariable(name = "id") Integer id, @RequestParam(name = "estado") String estado){
+        return ResponseEntity.of(pedidoService.actualizarEstadoPedido(id, estado));
     }
 
     @DeleteMapping("/{id}")
