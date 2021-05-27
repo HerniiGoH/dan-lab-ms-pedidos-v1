@@ -6,10 +6,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
-import utn.frsf.isi.dan.grupotp.tplab.danmspedidos.model.DetallePedido;
-import utn.frsf.isi.dan.grupotp.tplab.danmspedidos.model.EstadoPedido;
-import utn.frsf.isi.dan.grupotp.tplab.danmspedidos.model.Obra;
-import utn.frsf.isi.dan.grupotp.tplab.danmspedidos.model.Pedido;
+import utn.frsf.isi.dan.grupotp.tplab.danmspedidos.model.*;
 import utn.frsf.isi.dan.grupotp.tplab.danmspedidos.repository.DetallePedidoRepository;
 import utn.frsf.isi.dan.grupotp.tplab.danmspedidos.repository.PedidoRepository;
 import utn.frsf.isi.dan.grupotp.tplab.danmspedidos.services.PedidoService;
@@ -164,8 +161,27 @@ public class PedidoServiceImpl implements PedidoService {
                         return Optional.empty();
                     }
                     case 2:{
-                        //TODO hacer bien la verificacion
-                        pedido.setEstadoPedido(pedidoRepository.buscarEstadoPedido("ACEPTADO").orElse(null));
+                        //TODO verificar saldo deudor
+                        boolean hayStock = pedido.getDetallePedido().stream().allMatch(dp ->{
+                            WebClient webClient = WebClient.create("http://localhost:4042/api/producto/"+dp.getProductoId());
+                            ResponseEntity<Producto> response = webClient.method(HttpMethod.GET)
+                                    .accept(MediaType.APPLICATION_JSON)
+                                    .retrieve()
+                                    .toEntity(Producto.class)
+                                    .block();
+                            if(response!=null && response.getStatusCode().equals(HttpStatus.OK)){
+                                Producto p = response.getBody();
+                                return p != null && p.getStock() >= dp.getCantidad();
+                            }
+                            return false;
+                        });
+                        if(hayStock){
+                            //TODO hacer movimiento de stock
+                            pedido.setEstadoPedido(pedidoRepository.buscarEstadoPedido("ACEPTADO").orElse(null));
+
+                        } else {
+                            pedido.setEstadoPedido(pedidoRepository.buscarEstadoPedido("PENDIENTE").orElse(null));
+                        }
                         pedido = pedidoRepository.save(pedido);
                         pedido.setObra(buscarObraPorId(pedido.getObraId()));
                         return Optional.of(pedido);

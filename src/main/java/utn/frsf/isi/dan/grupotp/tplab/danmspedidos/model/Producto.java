@@ -6,14 +6,16 @@ public class Producto {
     private Integer id;
     private String descripcion;
     private Double precio;
+    private Integer stock;
 
     public Producto() {
     }
 
-    public Producto(Integer id, String descripcion, Double precio) {
+    public Producto(Integer id, String descripcion, Double precio, Integer stock) {
         this.id = id;
         this.descripcion = descripcion;
         this.precio = precio;
+        this.stock = stock;
     }
 
     public Integer getId() {
@@ -38,6 +40,14 @@ public class Producto {
 
     public void setPrecio(Double precio) {
         this.precio = precio;
+    }
+
+    public Integer getStock() {
+        return stock;
+    }
+
+    public void setStock(Integer stock) {
+        this.stock = stock;
     }
 
     @Override
