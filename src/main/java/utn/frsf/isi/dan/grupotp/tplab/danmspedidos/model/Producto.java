@@ -6,16 +6,16 @@ public class Producto {
     private Integer id;
     private String descripcion;
     private Double precio;
-    private Integer stock;
+    private Integer stockActual;
 
     public Producto() {
     }
 
-    public Producto(Integer id, String descripcion, Double precio, Integer stock) {
+    public Producto(Integer id, String descripcion, Double precio, Integer stockActual) {
         this.id = id;
         this.descripcion = descripcion;
         this.precio = precio;
-        this.stock = stock;
+        this.stockActual = stockActual;
     }
 
     public Integer getId() {
@@ -42,12 +42,12 @@ public class Producto {
         this.precio = precio;
     }
 
-    public Integer getStock() {
-        return stock;
+    public Integer getStockActual() {
+        return stockActual;
     }
 
-    public void setStock(Integer stock) {
-        this.stock = stock;
+    public void setStockActual(Integer stockActual) {
+        this.stockActual = stockActual;
     }
 
     @Override

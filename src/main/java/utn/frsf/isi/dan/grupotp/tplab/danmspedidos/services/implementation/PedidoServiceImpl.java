@@ -3,6 +3,7 @@ package utn.frsf.isi.dan.grupotp.tplab.danmspedidos.services.implementation;
 import net.minidev.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
+import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -11,17 +12,20 @@ import utn.frsf.isi.dan.grupotp.tplab.danmspedidos.repository.DetallePedidoRepos
 import utn.frsf.isi.dan.grupotp.tplab.danmspedidos.repository.PedidoRepository;
 import utn.frsf.isi.dan.grupotp.tplab.danmspedidos.services.PedidoService;
 
+import javax.jms.ObjectMessage;
 import java.util.*;
 
 @Service
 public class PedidoServiceImpl implements PedidoService {
     private final PedidoRepository pedidoRepository;
     private final DetallePedidoRepository detallePedidoRepository;
+    private final JmsTemplate jms;
 
     @Autowired
-    public PedidoServiceImpl(PedidoRepository pedidoRepository, DetallePedidoRepository detallePedidoRepository){
+    public PedidoServiceImpl(PedidoRepository pedidoRepository, DetallePedidoRepository detallePedidoRepository, JmsTemplate jms){
         this.pedidoRepository=pedidoRepository;
         this.detallePedidoRepository=detallePedidoRepository;
+        this.jms = jms;
     }
 
     @Override
@@ -148,7 +152,7 @@ public class PedidoServiceImpl implements PedidoService {
         Optional<EstadoPedido> estadoPedidoOpt = pedidoRepository.buscarEstadoPedido(estado);
         Optional<Pedido> pedidoOpt = pedidoRepository.findById(id);
         if(pedidoOpt.isPresent() && estadoPedidoOpt.isPresent()){
-            //TODO hacer bien lo de los estados, por ahora siempre pasa de CONFIRMADO a ACEPTADO
+            //TODO hacer bien lo de los estados, por ahora solo pasa de NUEVO a CONFIRMADO, a ACEPTADO o PENDIENTE
             Pedido pedido = pedidoOpt.get();
             EstadoPedido estadoPedido = estadoPedidoOpt.get();
             //Si actualizo al estado que ya tengo, me voy nomas no hago nada
@@ -171,14 +175,26 @@ public class PedidoServiceImpl implements PedidoService {
                                     .block();
                             if(response!=null && response.getStatusCode().equals(HttpStatus.OK)){
                                 Producto p = response.getBody();
-                                return p != null && p.getStock() >= dp.getCantidad();
+                                return p != null && p.getStockActual() >= dp.getCantidad();
                             }
                             return false;
                         });
                         if(hayStock){
                             //TODO hacer movimiento de stock
-                            pedido.setEstadoPedido(pedidoRepository.buscarEstadoPedido("ACEPTADO").orElse(null));
-
+                            WebClient webClient = WebClient.create("http://localhost:4042/api/producto/mvms-stock");
+                            JSONObject jsonObject = new JSONObject();
+                            jsonObject.put("detallePedido", pedido.getDetallePedido());
+                            ResponseEntity<String> response = webClient.method(HttpMethod.POST)
+                                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                                    .body(BodyInserters.fromValue(jsonObject))
+                                    .retrieve()
+                                    .toEntity(String.class)
+                                    .block();
+                            if(response!=null && response.getStatusCode().equals(HttpStatus.OK)){
+                                pedido.setEstadoPedido(pedidoRepository.buscarEstadoPedido("ACEPTADO").orElse(null));
+                            } else{
+                                pedido.setEstadoPedido(pedidoRepository.buscarEstadoPedido("PENDIENTE").orElse(null));
+                            }
                         } else {
                             pedido.setEstadoPedido(pedidoRepository.buscarEstadoPedido("PENDIENTE").orElse(null));
                         }

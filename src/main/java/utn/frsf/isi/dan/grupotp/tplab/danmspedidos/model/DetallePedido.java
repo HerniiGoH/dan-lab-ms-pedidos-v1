@@ -5,11 +5,12 @@ import com.fasterxml.jackson.annotation.JsonIdentityReference;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 import javax.persistence.*;
+import java.io.Serializable;
 import java.util.Objects;
 
 @Entity
 @JsonIdentityInfo(scope = DetallePedido.class, generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
-public class DetallePedido {
+public class DetallePedido implements Serializable{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
