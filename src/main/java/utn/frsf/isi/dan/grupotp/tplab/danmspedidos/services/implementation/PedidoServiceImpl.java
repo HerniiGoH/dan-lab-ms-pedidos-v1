@@ -31,21 +31,36 @@ public class PedidoServiceImpl implements PedidoService {
     @Override
     public List<Pedido> buscarTodos() {
         List<Pedido> pedidosEncontrados = pedidoRepository.findAll();
-        pedidosEncontrados.forEach(pedido -> pedido.setObra(buscarObraPorId(pedido.getObraId())));
+        pedidosEncontrados.forEach(pedido -> {
+            pedido.setObra(buscarObraPorId(pedido.getObraId()));
+            pedido.getDetallePedido().forEach(dp ->{
+                dp.setProducto(buscarProductoPorId(dp.getProductoId()));
+            });
+        });
         return pedidosEncontrados;
     }
 
     @Override
     public Optional<Pedido> buscarPedidoPorId(Integer id) {
         Optional<Pedido> pedidoEncontrado = pedidoRepository.findById(id);
-        pedidoEncontrado.ifPresent(pedido -> pedido.setObra(buscarObraPorId(pedido.getObraId())));
+        pedidoEncontrado.ifPresent(pedido -> {
+            pedido.setObra(buscarObraPorId(pedido.getObraId()));
+            pedido.getDetallePedido().forEach(dp->{
+                dp.setProducto(buscarProductoPorId(dp.getProductoId()));
+            });
+        });
         return pedidoEncontrado;
     }
 
     @Override
     public Optional<List<Pedido>> buscarPedidosPorIdObra(Integer id) {
         Optional<List<Pedido>> pedidosEncontrados = pedidoRepository.findByIdObra(id);
-        pedidosEncontrados.ifPresent(pedidos -> pedidos.forEach(pedido -> pedido.setObra(buscarObraPorId(pedido.getObraId()))));
+        pedidosEncontrados.ifPresent(pedidos -> pedidos.forEach(pedido -> {
+                pedido.setObra(buscarObraPorId(pedido.getObraId()));
+                pedido.getDetallePedido().forEach(dp->{
+                    dp.setProducto(buscarProductoPorId(dp.getProductoId()));
+                });
+        }));
         return pedidosEncontrados;
     }
 
@@ -81,7 +96,12 @@ public class PedidoServiceImpl implements PedidoService {
             for(Obra aux : obras){
                 pedidos.addAll(this.buscarPedidosPorIdObra(aux.getId()).orElseGet(ArrayList::new));
             }
-            pedidos.forEach(pedido -> pedido.setObra(buscarObraPorId(pedido.getObraId())));
+            pedidos.forEach(pedido -> {
+                pedido.setObra(buscarObraPorId(pedido.getObraId()));
+                pedido.getDetallePedido().forEach(dp->{
+                    dp.setProducto(buscarProductoPorId(dp.getProductoId()));
+                });
+            });
             return Optional.of(new ArrayList<>(pedidos));
         }
 
@@ -92,7 +112,12 @@ public class PedidoServiceImpl implements PedidoService {
     public Optional<List<Pedido>> buscarPedidosPorEstado(String estado){
         if(pedidoRepository.buscarEstadoPedido(estado).isPresent()){
             Optional<List<Pedido>> pedidosEncontrados = pedidoRepository.buscarPedidoPorEstado(estado);
-            pedidosEncontrados.ifPresent(pedidos -> pedidos.forEach(pedido -> pedido.setObra(buscarObraPorId(pedido.getObraId()))));
+            pedidosEncontrados.ifPresent(pedidos -> pedidos.forEach(pedido -> {
+                pedido.setObra(buscarObraPorId(pedido.getObraId()));
+                pedido.getDetallePedido().forEach(dp->{
+                    dp.setProducto(buscarProductoPorId(dp.getProductoId()));
+                });
+            }));
             return pedidosEncontrados;
         }
         return Optional.empty();
@@ -100,7 +125,11 @@ public class PedidoServiceImpl implements PedidoService {
 
     @Override
     public Optional<DetallePedido> buscarDetallePedidoPorId(Integer idPedido, Integer id) {
-        return detallePedidoRepository.findById(id);
+        Optional<DetallePedido> detalleEncontrado = detallePedidoRepository.findById(id);
+        detalleEncontrado.ifPresent(dp->{
+            dp.setProducto(buscarProductoPorId(dp.getProductoId()));
+        });
+        return detalleEncontrado;
     }
 
     @Override
@@ -110,6 +139,9 @@ public class PedidoServiceImpl implements PedidoService {
             aux.setPedido(pedidoCreado);
         }
         pedidoCreado.setDetallePedido(detallePedidoRepository.saveAll(nuevoPedido.getDetallePedido()));
+        pedidoCreado.getDetallePedido().forEach(dp->{
+            dp.setProducto(buscarProductoPorId(dp.getProductoId()));
+        });
         return pedidoCreado;
     }
 
@@ -118,7 +150,9 @@ public class PedidoServiceImpl implements PedidoService {
         Optional<Pedido> pedidoOpt = pedidoRepository.findById(id);
         if(pedidoOpt.isPresent() && pedidoOpt.get().getEstadoPedido().getId()==1){
             nuevoDetallePedido.setPedido(pedidoOpt.get());
-            return detallePedidoRepository.save(nuevoDetallePedido);
+            nuevoDetallePedido = detallePedidoRepository.save(nuevoDetallePedido);
+            nuevoDetallePedido.setProducto(buscarProductoPorId(nuevoDetallePedido.getProductoId()));
+            return nuevoDetallePedido;
         } else return null;
     }
 
@@ -129,6 +163,9 @@ public class PedidoServiceImpl implements PedidoService {
             if(pedidoViejo.get().getEstadoPedido().getEstado().equals(nuevoPedido.getEstadoPedido().getEstado())){
                 Pedido pedidoGuardado = pedidoRepository.save(nuevoPedido);
                 pedidoGuardado.setObra(buscarObraPorId(pedidoGuardado.getObraId()));
+                pedidoGuardado.getDetallePedido().forEach(dp->{
+                    dp.setProducto(buscarProductoPorId(dp.getProductoId()));
+                });
                 return Optional.of(pedidoGuardado);
             } else return Optional.empty();
         } else return Optional.empty();
@@ -141,7 +178,9 @@ public class PedidoServiceImpl implements PedidoService {
         if(pedidoOpt.isPresent() && pedidoOpt.get().getEstadoPedido().getId()==1 && detallePedidoRepository.existsById(id)){
             nuevoDetalle.setId(id);
             nuevoDetalle.setPedido(pedidoOpt.get());
-            return Optional.of(detallePedidoRepository.save(nuevoDetalle));
+            nuevoDetalle = detallePedidoRepository.save(nuevoDetalle);
+            nuevoDetalle.setProducto(buscarProductoPorId(nuevoDetalle.getProductoId()));
+            return Optional.of(nuevoDetalle);
         }
 
         return Optional.empty();
@@ -200,6 +239,9 @@ public class PedidoServiceImpl implements PedidoService {
                         }
                         pedido = pedidoRepository.save(pedido);
                         pedido.setObra(buscarObraPorId(pedido.getObraId()));
+                        pedido.getDetallePedido().forEach(dp->{
+                            dp.setProducto(buscarProductoPorId(dp.getProductoId()));
+                        });
                         return Optional.of(pedido);
                     }
                     case 3:{
@@ -211,6 +253,9 @@ public class PedidoServiceImpl implements PedidoService {
                             pedido.setEstadoPedido(estadoPedido);
                             pedido = pedidoRepository.save(pedido);
                             pedido.setObra(buscarObraPorId(pedido.getObraId()));
+                            pedido.getDetallePedido().forEach(dp->{
+                                dp.setProducto(buscarProductoPorId(dp.getProductoId()));
+                            });
                             return Optional.of(pedido);
                         }
                         return Optional.empty();
@@ -263,6 +308,19 @@ public class PedidoServiceImpl implements PedidoService {
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .toEntity(Obra.class)
+                .block();
+        if(response!=null && response.getStatusCode().equals(HttpStatus.OK)){
+            return response.getBody();
+        }
+        return null;
+    }
+
+    private Producto buscarProductoPorId(Integer id){
+        WebClient webClient = WebClient.create("http://localhost:4042/api/producto/"+id);
+        ResponseEntity<Producto> response = webClient.method(HttpMethod.GET)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .toEntity(Producto.class)
                 .block();
         if(response!=null && response.getStatusCode().equals(HttpStatus.OK)){
             return response.getBody();
