@@ -2,6 +2,7 @@ package utn.frsf.isi.dan.grupotp.tplab.danmspedidos.services.implementation;
 
 import net.minidev.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.*;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
@@ -20,12 +21,18 @@ public class PedidoServiceImpl implements PedidoService {
     private final PedidoRepository pedidoRepository;
     private final DetallePedidoRepository detallePedidoRepository;
     private final JmsTemplate jms;
+    private final WebClient webClient1, webClient2, webClient3, webClient4, webClient5;
 
     @Autowired
-    public PedidoServiceImpl(PedidoRepository pedidoRepository, DetallePedidoRepository detallePedidoRepository, JmsTemplate jms){
+    public PedidoServiceImpl(PedidoRepository pedidoRepository, DetallePedidoRepository detallePedidoRepository, JmsTemplate jms, @Qualifier("webClient1") WebClient webClient1, @Qualifier("webClient2") WebClient webClient2, @Qualifier("webClient3") WebClient webClient3, @Qualifier("webClient4") WebClient webClient4, @Qualifier("webClient5") WebClient webClient5){
         this.pedidoRepository=pedidoRepository;
         this.detallePedidoRepository=detallePedidoRepository;
         this.jms = jms;
+        this.webClient1=webClient1;
+        this.webClient2=webClient2;
+        this.webClient3=webClient3;
+        this.webClient4=webClient4;
+        this.webClient5=webClient5;
     }
 
     @Override
@@ -79,8 +86,8 @@ public class PedidoServiceImpl implements PedidoService {
                 json.put("cliente", cliente);
             }
         }
-        WebClient webClient = WebClient.create("http://localhost:4040/api/obra");
-        ResponseEntity<List<Obra>> response = webClient.method(HttpMethod.GET)
+        //WebClient webClient = WebClient.create("http://localhost:4040/api/obra");
+        ResponseEntity<List<Obra>> response = webClient5.method(HttpMethod.GET)
                 .uri("/obra")
                 .accept(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
@@ -173,7 +180,7 @@ public class PedidoServiceImpl implements PedidoService {
 
     @Override
     public Optional<DetallePedido> actualizarDetallePedido(DetallePedido nuevoDetalle, Integer idPedido, Integer id){
-        Optional<Pedido> pedidoOpt = pedidoRepository.findById(id);
+        Optional<Pedido> pedidoOpt = pedidoRepository.findById(idPedido);
 
         if(pedidoOpt.isPresent() && pedidoOpt.get().getEstadoPedido().getId()==1 && detallePedidoRepository.existsById(id)){
             nuevoDetalle.setId(id);
@@ -206,8 +213,9 @@ public class PedidoServiceImpl implements PedidoService {
                     case 2:{
                         //TODO verificar saldo deudor
                         boolean hayStock = pedido.getDetallePedido().stream().allMatch(dp ->{
-                            WebClient webClient = WebClient.create("http://localhost:4042/api/producto/"+dp.getProductoId());
-                            ResponseEntity<Producto> response = webClient.method(HttpMethod.GET)
+                            //WebClient webClient = WebClient.create("http://localhost:4042/api/producto/"+dp.getProductoId());
+                            ResponseEntity<Producto> response = webClient3.method(HttpMethod.GET)
+                                    .uri(dp.getProductoId().toString())
                                     .accept(MediaType.APPLICATION_JSON)
                                     .retrieve()
                                     .toEntity(Producto.class)
@@ -220,10 +228,10 @@ public class PedidoServiceImpl implements PedidoService {
                         });
                         if(hayStock){
                             //TODO hacer movimiento de stock
-                            WebClient webClient = WebClient.create("http://localhost:4042/api/producto/mvms-stock");
+                            //WebClient webClient = WebClient.create("http://localhost:4042/api/producto/mvms-stock");
                             JSONObject jsonObject = new JSONObject();
                             jsonObject.put("detallePedido", pedido.getDetallePedido());
-                            ResponseEntity<String> response = webClient.method(HttpMethod.POST)
+                            ResponseEntity<String> response = webClient4.method(HttpMethod.POST)
                                     .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                                     .body(BodyInserters.fromValue(jsonObject))
                                     .retrieve()
@@ -303,8 +311,9 @@ public class PedidoServiceImpl implements PedidoService {
     }
 
     private Obra buscarObraPorId(Integer id){
-        WebClient webClient = WebClient.create("http://localhost:4040/api/obra/"+id);
-        ResponseEntity<Obra> response = webClient.method(HttpMethod.GET)
+        //WebClient webClient = WebClient.create("http://localhost:4040/api/obra/"+id);
+        ResponseEntity<Obra> response = webClient1.method(HttpMethod.GET)
+                .uri(id.toString())
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .toEntity(Obra.class)
@@ -316,8 +325,9 @@ public class PedidoServiceImpl implements PedidoService {
     }
 
     private Producto buscarProductoPorId(Integer id){
-        WebClient webClient = WebClient.create("http://localhost:4042/api/producto/"+id);
-        ResponseEntity<Producto> response = webClient.method(HttpMethod.GET)
+        //WebClient webClient = WebClient.create("http://localhost:4042/api/producto/"+id);
+        ResponseEntity<Producto> response = webClient2.method(HttpMethod.GET)
+                .uri(id.toString())
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .toEntity(Producto.class)

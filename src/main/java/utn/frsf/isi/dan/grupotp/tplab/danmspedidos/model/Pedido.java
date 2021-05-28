@@ -109,6 +109,6 @@ public class Pedido implements Serializable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getFechaPedido(), getEstadoPedido(), getDetallePedido(), getObra(), getObraId());
+        return Objects.hash(getId(), getFechaPedido(), getEstadoPedido(), getObra(), getObraId());
     }
 }
