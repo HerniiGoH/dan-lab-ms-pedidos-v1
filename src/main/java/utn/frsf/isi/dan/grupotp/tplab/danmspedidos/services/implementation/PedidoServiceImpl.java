@@ -149,6 +149,7 @@ public class PedidoServiceImpl implements PedidoService {
         pedidoCreado.getDetallePedido().forEach(dp -> {
             dp.setProducto(buscarProductoPorId(dp.getProductoId()));
         });
+        pedidoCreado.setObra(buscarObraPorId(pedidoCreado.getObraId()));
         return pedidoCreado;
     }
 
