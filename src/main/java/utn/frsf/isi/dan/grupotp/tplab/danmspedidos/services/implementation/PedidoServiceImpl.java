@@ -20,14 +20,12 @@ import java.util.*;
 public class PedidoServiceImpl implements PedidoService {
     private final PedidoRepository pedidoRepository;
     private final DetallePedidoRepository detallePedidoRepository;
-    private final JmsTemplate jms;
     private final WebClient webClient1, webClient2, webClient3, webClient4, webClient5;
 
     @Autowired
-    public PedidoServiceImpl(PedidoRepository pedidoRepository, DetallePedidoRepository detallePedidoRepository, JmsTemplate jms, @Qualifier("webClient1") WebClient webClient1, @Qualifier("webClient2") WebClient webClient2, @Qualifier("webClient3") WebClient webClient3, @Qualifier("webClient4") WebClient webClient4, @Qualifier("webClient5") WebClient webClient5) {
+    public PedidoServiceImpl(PedidoRepository pedidoRepository, DetallePedidoRepository detallePedidoRepository, @Qualifier("webClient1") WebClient webClient1, @Qualifier("webClient2") WebClient webClient2, @Qualifier("webClient3") WebClient webClient3, @Qualifier("webClient4") WebClient webClient4, @Qualifier("webClient5") WebClient webClient5) {
         this.pedidoRepository = pedidoRepository;
         this.detallePedidoRepository = detallePedidoRepository;
-        this.jms = jms;
         this.webClient1 = webClient1;
         this.webClient2 = webClient2;
         this.webClient3 = webClient3;
